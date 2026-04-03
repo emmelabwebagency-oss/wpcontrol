@@ -42,7 +42,7 @@ $unlocked = isset( $_GET['unlocked'] ) && $_GET['unlocked'] === '1';
     <!-- Stato Generale -->
     <div class="ltk-cards">
         <div class="ltk-card <?php echo $is_locked ? 'ltk-card-danger' : 'ltk-card-success'; ?>">
-            <h3><?php esc_html_e( 'Stato Blocco', 'wp-ltk' ); ?></h3>
+            <h3><?php esc_html_e( 'Stato', 'wp-ltk' ); ?></h3>
             <div class="ltk-card-value">
                 <?php if ( $is_locked ) : ?>
                     <span class="ltk-status-locked">&#128274; <?php esc_html_e( 'BLOCCATO', 'wp-ltk' ); ?></span>
@@ -71,20 +71,6 @@ $unlocked = isset( $_GET['unlocked'] ) && $_GET['unlocked'] === '1';
             </div>
         </div>
 
-        <div class="ltk-card <?php echo ( $hb_status['restricted_mode'] ?? false ) ? 'ltk-card-warning' : ''; ?>">
-            <h3><?php esc_html_e( 'Ownership Enforcement', 'wp-ltk' ); ?></h3>
-            <div class="ltk-card-value">
-                <?php if ( $hb_status['enforcement_enabled'] ?? false ) : ?>
-                    <?php if ( $hb_status['restricted_mode'] ?? false ) : ?>
-                        <span style="color:#d63638;">&#9888; <?php esc_html_e( 'Modalità Ristretta', 'wp-ltk' ); ?></span>
-                    <?php else : ?>
-                        <span style="color:#00a32a;">&#10003; <?php esc_html_e( 'Attivo', 'wp-ltk' ); ?></span>
-                    <?php endif; ?>
-                <?php else : ?>
-                    <span style="color:#999;"><?php esc_html_e( 'Disabilitato', 'wp-ltk' ); ?></span>
-                <?php endif; ?>
-            </div>
-        </div>
     </div>
 
     <!-- Informazioni Sito -->
@@ -92,7 +78,6 @@ $unlocked = isset( $_GET['unlocked'] ) && $_GET['unlocked'] === '1';
     <table class="widefat striped">
         <tbody>
             <tr><th><?php esc_html_e( 'Site ID', 'wp-ltk' ); ?></th><td><code><?php echo esc_html( $site_id ); ?></code></td></tr>
-            <tr><th><?php esc_html_e( 'URL Pannello Remoto', 'wp-ltk' ); ?></th><td><?php echo esc_html( $panel_url ); ?></td></tr>
             <tr><th><?php esc_html_e( 'Versione WordPress', 'wp-ltk' ); ?></th><td><?php echo esc_html( get_bloginfo( 'version' ) ); ?></td></tr>
             <tr><th><?php esc_html_e( 'Versione PHP', 'wp-ltk' ); ?></th><td><?php echo esc_html( phpversion() ); ?></td></tr>
             <tr><th><?php esc_html_e( 'Tema Attivo', 'wp-ltk' ); ?></th><td><?php echo esc_html( get_stylesheet() ); ?></td></tr>
@@ -101,38 +86,4 @@ $unlocked = isset( $_GET['unlocked'] ) && $_GET['unlocked'] === '1';
         </tbody>
     </table>
 
-    <!-- Alert Recenti -->
-    <h2><?php esc_html_e( 'Alert di Sicurezza Recenti', 'wp-ltk' ); ?></h2>
-    <?php if ( empty( $recent_alerts ) ) : ?>
-        <p class="description"><?php esc_html_e( 'Nessun alert di sicurezza recente.', 'wp-ltk' ); ?></p>
-    <?php else : ?>
-        <table class="widefat striped">
-            <thead>
-                <tr>
-                    <th><?php esc_html_e( 'Tipo', 'wp-ltk' ); ?></th>
-                    <th><?php esc_html_e( 'Gravità', 'wp-ltk' ); ?></th>
-                    <th><?php esc_html_e( 'Descrizione', 'wp-ltk' ); ?></th>
-                    <th><?php esc_html_e( 'Data', 'wp-ltk' ); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ( $recent_alerts as $alert ) : ?>
-                    <tr>
-                        <td><code><?php echo esc_html( $alert['alert_type'] ); ?></code></td>
-                        <td>
-                            <?php
-                            $severity_colors = [ 'low' => '#999', 'medium' => '#dba617', 'high' => '#d63638', 'critical' => '#8b0000' ];
-                            $color = $severity_colors[ $alert['severity'] ] ?? '#999';
-                            ?>
-                            <span style="color:<?php echo esc_attr( $color ); ?>;font-weight:bold;">
-                                <?php echo esc_html( strtoupper( $alert['severity'] ) ); ?>
-                            </span>
-                        </td>
-                        <td><?php echo esc_html( $alert['description'] ); ?></td>
-                        <td><?php echo esc_html( $alert['created_at'] ); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
 </div>
