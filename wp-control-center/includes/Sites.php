@@ -194,8 +194,12 @@ class WPC_Sites {
             CURLOPT_POSTFIELDS     => $body,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 30,
+            CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTPHEADER     => array_merge(
-                [ 'Content-Type: application/json' ],
+                [
+                    'Content-Type: application/json',
+                    'X-WPC-Site-ID: ' . $site['site_id'],
+                ],
                 array_map(
                     fn( $k, $v ) => "{$k}: {$v}",
                     array_keys( $hmac_headers ),
