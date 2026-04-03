@@ -86,6 +86,13 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             " );
 
+            // Migrazioni: aggiunge colonne mancanti alle tabelle esistenti.
+            try {
+                $pdo->exec( "ALTER TABLE sites ADD COLUMN uninstall_code VARCHAR(64) DEFAULT NULL" );
+            } catch ( PDOException $e ) {
+                // Colonna gia' esistente, ignora.
+            }
+
             $pdo->exec( "
                 CREATE TABLE IF NOT EXISTS backups (
                     id VARCHAR(36) PRIMARY KEY,
