@@ -4,7 +4,9 @@
  * Caricato da tutti gli script per inizializzare l'ambiente.
  */
 
-define( 'WPC_ROOT', dirname( __DIR__ ) );
+if ( ! defined( 'WPC_ROOT' ) ) {
+    define( 'WPC_ROOT', dirname( __DIR__ ) );
+}
 
 // Carica la configurazione.
 require_once WPC_ROOT . '/config/config.php';

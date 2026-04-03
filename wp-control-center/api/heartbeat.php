@@ -5,8 +5,14 @@
  * Riceve il battito cardiaco dai siti WordPress.
  */
 
+// Cattura qualsiasi output spurio (warning PHP, BOM, etc.) per non corrompere il JSON.
+ob_start();
+
 define( 'WPC_ROOT', dirname( __DIR__ ) );
 require_once WPC_ROOT . '/includes/bootstrap.php';
+
+// Pulisci qualsiasi output generato durante il bootstrap.
+ob_end_clean();
 
 header( 'Content-Type: application/json; charset=utf-8' );
 
@@ -16,25 +22,48 @@ if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
     exit;
 }
 
-// Autenticazione HMAC.
-$site = WPC_HmacAuth::require_site_auth();
+// Leggi il body UNA SOLA VOLTA prima di qualsiasi altra operazione.
+// Su alcuni hosting (CGI/FastCGI) php://input puo' essere letto solo una volta.
+$raw_body = file_get_contents( 'php://input' );
 
-// Leggi il body della richiesta.
-$body = file_get_contents( 'php://input' );
-$data = json_decode( $body, true );
+// Autenticazione HMAC (usa il body gia' letto).
+$headers = WPC_HmacAuth::extract_headers();
+
+if ( ! $headers ) {
+    http_response_code( 401 );
+    echo json_encode( [ 'error' => 'Header HMAC mancanti.' ] );
+    exit;
+}
+
+$auth_result = WPC_HmacAuth::verify_request(
+    $headers['site_id'],
+    $headers['signature'],
+    $headers['timestamp'],
+    $headers['nonce'],
+    $raw_body
+);
+
+if ( ! $auth_result['valid'] ) {
+    http_response_code( 403 );
+    echo json_encode( [ 'error' => $auth_result['message'] ] );
+    exit;
+}
+
+$site = $auth_result['site'];
+
+// Decodifica il body JSON.
+$data = json_decode( $raw_body, true );
 
 if ( ! $data ) {
-    // Riprova con i dati POST.
     $data = $_POST;
 }
 
-// Aggiorna i dati del sito.
+// Aggiorna i dati del sito (NON sovrascrivere is_locked - quello e' gestito solo dal pannello).
 $update_data = [
     'wp_version'   => $data['wp_version'] ?? null,
     'php_version'  => $data['php_version'] ?? null,
     'active_theme' => $data['active_theme'] ?? null,
     'plugin_count' => $data['plugin_count'] ?? null,
-    'is_locked'    => $data['is_locked'] ?? null,
 ];
 
 WPC_Sites::update_heartbeat( $site['site_id'], $update_data );

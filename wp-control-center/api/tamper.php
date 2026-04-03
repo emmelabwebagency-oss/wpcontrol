@@ -5,8 +5,10 @@
  * Riceve alert di manomissione dai siti WordPress.
  */
 
+ob_start();
 define( 'WPC_ROOT', dirname( __DIR__ ) );
 require_once WPC_ROOT . '/includes/bootstrap.php';
+ob_end_clean();
 
 header( 'Content-Type: application/json; charset=utf-8' );
 
@@ -16,12 +18,25 @@ if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
     exit;
 }
 
-// Autenticazione HMAC.
-$site = WPC_HmacAuth::require_site_auth();
+// Leggi il body una sola volta.
+$raw_body = file_get_contents( 'php://input' );
 
-// Leggi il body della richiesta.
-$body = file_get_contents( 'php://input' );
-$data = json_decode( $body, true );
+// Autenticazione HMAC.
+$headers = WPC_HmacAuth::extract_headers();
+if ( ! $headers ) {
+    http_response_code( 401 );
+    echo json_encode( [ 'error' => 'Header HMAC mancanti.' ] );
+    exit;
+}
+$auth_result = WPC_HmacAuth::verify_request( $headers['site_id'], $headers['signature'], $headers['timestamp'], $headers['nonce'], $raw_body );
+if ( ! $auth_result['valid'] ) {
+    http_response_code( 403 );
+    echo json_encode( [ 'error' => $auth_result['message'] ] );
+    exit;
+}
+$site = $auth_result['site'];
+
+$data = json_decode( $raw_body, true );
 
 if ( ! $data ) {
     $data = $_POST;
