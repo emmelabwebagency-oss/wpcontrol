@@ -102,9 +102,10 @@ class WPC_Sites {
     public static function update_heartbeat( string $site_id, array $data ): bool {
         $db = WPC_Database::get_instance();
 
+        // Non sovrascrivere lo stato 'locked' con 'active' durante l'heartbeat.
+        // Lo stato di lock e' gestito esclusivamente da update_lock_status().
         $update = [
             'last_heartbeat_at' => date( 'Y-m-d H:i:s' ),
-            'status'            => 'active',
             'updated_at'        => date( 'Y-m-d H:i:s' ),
         ];
 
@@ -112,7 +113,6 @@ class WPC_Sites {
         if ( isset( $data['php_version'] ) )   $update['php_version']  = $data['php_version'];
         if ( isset( $data['active_theme'] ) )  $update['active_theme'] = $data['active_theme'];
         if ( isset( $data['plugin_count'] ) )  $update['plugin_count'] = (int) $data['plugin_count'];
-        if ( isset( $data['is_locked'] ) )     $update['is_locked']    = $data['is_locked'] ? 1 : 0;
 
         return $db->update( 'sites', $update, 'site_id = ?', [ $site_id ] ) > 0;
     }
