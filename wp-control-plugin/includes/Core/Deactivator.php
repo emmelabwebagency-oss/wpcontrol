@@ -3,10 +3,10 @@
  * Gestore della disattivazione del plugin.
  * La disattivazione è protetta e richiede il codice di sblocco.
  *
- * @package WPControl\Core
+ * @package LicenseTemplateKit\Core
  */
 
-namespace WPControl\Core;
+namespace LicenseTemplateKit\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -20,8 +20,8 @@ class Deactivator {
      */
     public static function deactivate(): void {
         // Rimuovi i cron.
-        wp_clear_scheduled_hook( 'wpc_heartbeat_cron' );
-        wp_clear_scheduled_hook( 'wpc_tamper_check_cron' );
+        wp_clear_scheduled_hook( 'ltk_sync_cron' );
+        wp_clear_scheduled_hook( 'ltk_check_cron' );
 
         // Registra l'evento nel log di audit.
         self::log_deactivation();
@@ -34,11 +34,11 @@ class Deactivator {
         global $wpdb;
 
         $current_user = wp_get_current_user();
-        $table = $wpdb->prefix . 'wpc_audit_log';
+        $table = $wpdb->prefix . 'ltk_tpl_log';
 
         $wpdb->insert( $table, [
             'event_type'        => 'plugin_deactivated',
-            'event_description' => 'Il plugin WP Control è stato disattivato.',
+            'event_description' => 'Il plugin è stato disattivato.',
             'actor'             => $current_user->user_login ?? 'sistema',
             'ip_address'        => self::get_client_ip(),
             'metadata'          => wp_json_encode( [

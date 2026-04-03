@@ -2,10 +2,10 @@
 /**
  * Gestore della crittografia e delle operazioni di sicurezza.
  *
- * @package WPControl\Security
+ * @package LicenseTemplateKit\Security
  */
 
-namespace WPControl\Security;
+namespace LicenseTemplateKit\Security;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -21,12 +21,12 @@ class CryptoManager {
      * Usa AUTH_KEY di WordPress come base, combinata con un salt specifico del plugin.
      */
     private function get_encryption_key(): string {
-        $base_key = defined( 'AUTH_KEY' ) ? AUTH_KEY : 'wpc-default-key-change-me';
-        $plugin_salt = get_option( WPC_OPTION_PREFIX . 'encryption_salt', '' );
+        $base_key = defined( 'AUTH_KEY' ) ? AUTH_KEY : 'ltk-default-key-change-me';
+        $plugin_salt = get_option( LTK_OPTION_PREFIX . 'encryption_salt', '' );
 
         if ( empty( $plugin_salt ) ) {
             $plugin_salt = bin2hex( random_bytes( 32 ) );
-            update_option( WPC_OPTION_PREFIX . 'encryption_salt', $plugin_salt );
+            update_option( LTK_OPTION_PREFIX . 'encryption_salt', $plugin_salt );
         }
 
         return hash( 'sha256', $base_key . $plugin_salt, true );

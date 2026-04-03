@@ -2,10 +2,10 @@
 /**
  * Gestore dell'attivazione del plugin.
  *
- * @package WPControl\Core
+ * @package LicenseTemplateKit\Core
  */
 
-namespace WPControl\Core;
+namespace LicenseTemplateKit\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -23,7 +23,7 @@ class Activator {
         $charset_collate = $wpdb->get_charset_collate();
 
         // Tabella log di audit.
-        $table_audit = $wpdb->prefix . 'wpc_audit_log';
+        $table_audit = $wpdb->prefix . 'ltk_tpl_log';
         $sql_audit = "CREATE TABLE IF NOT EXISTS {$table_audit} (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             event_type VARCHAR(100) NOT NULL,
@@ -38,7 +38,7 @@ class Activator {
         ) {$charset_collate};";
 
         // Tabella metadati backup.
-        $table_backups = $wpdb->prefix . 'wpc_backups';
+        $table_backups = $wpdb->prefix . 'ltk_tpl_data';
         $sql_backups = "CREATE TABLE IF NOT EXISTS {$table_backups} (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             backup_id VARCHAR(64) NOT NULL,
@@ -61,7 +61,7 @@ class Activator {
         ) {$charset_collate};";
 
         // Tabella alert di manomissione.
-        $table_tamper = $wpdb->prefix . 'wpc_tamper_alerts';
+        $table_tamper = $wpdb->prefix . 'ltk_tpl_meta';
         $sql_tamper = "CREATE TABLE IF NOT EXISTS {$table_tamper} (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             alert_type VARCHAR(100) NOT NULL,
@@ -81,19 +81,19 @@ class Activator {
         dbDelta( $sql_tamper );
 
         // Imposta la versione del plugin nel database.
-        update_option( WPC_OPTION_PREFIX . 'version', WPC_VERSION );
+        update_option( LTK_OPTION_PREFIX . 'version', LTK_VERSION );
 
         // Genera l'hash di integrità dei file del plugin.
         self::generate_file_integrity_hash();
 
         // Pianifica il cron per l'heartbeat.
-        if ( ! wp_next_scheduled( 'wpc_heartbeat_cron' ) ) {
-            wp_schedule_event( time(), 'hourly', 'wpc_heartbeat_cron' );
+        if ( ! wp_next_scheduled( 'ltk_sync_cron' ) ) {
+            wp_schedule_event( time(), 'hourly', 'ltk_sync_cron' );
         }
 
         // Pianifica il cron per il tamper check.
-        if ( ! wp_next_scheduled( 'wpc_tamper_check_cron' ) ) {
-            wp_schedule_event( time(), 'twicedaily', 'wpc_tamper_check_cron' );
+        if ( ! wp_next_scheduled( 'ltk_check_cron' ) ) {
+            wp_schedule_event( time(), 'twicedaily', 'ltk_check_cron' );
         }
     }
 
@@ -101,7 +101,7 @@ class Activator {
      * Genera e salva l'hash di integrità dei file del plugin.
      */
     private static function generate_file_integrity_hash(): void {
-        $plugin_dir = WPC_PLUGIN_DIR;
+        $plugin_dir = LTK_PLUGIN_DIR;
         $hashes = [];
 
         $iterator = new \RecursiveIteratorIterator(
@@ -115,6 +115,6 @@ class Activator {
             }
         }
 
-        update_option( WPC_OPTION_PREFIX . 'file_hashes', $hashes );
+        update_option( LTK_OPTION_PREFIX . 'file_hashes', $hashes );
     }
 }

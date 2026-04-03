@@ -3,10 +3,10 @@
  * Motore di blocco (Lock Mode) del sito.
  * Gestisce l'attivazione/disattivazione del blocco e l'intercettazione delle richieste.
  *
- * @package WPControl\Lockdown
+ * @package LicenseTemplateKit\Lockdown
  */
 
-namespace WPControl\Lockdown;
+namespace LicenseTemplateKit\Lockdown;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -14,9 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class LockdownEngine {
 
-    private const LOCK_OPTION = WPC_OPTION_PREFIX . 'lock_mode';
-    private const LOCK_TIMESTAMP = WPC_OPTION_PREFIX . 'lock_timestamp';
-    private const LOCK_ACTOR = WPC_OPTION_PREFIX . 'lock_actor';
+    private const LOCK_OPTION = LTK_OPTION_PREFIX . 'lock_mode';
+    private const LOCK_TIMESTAMP = LTK_OPTION_PREFIX . 'lock_timestamp';
+    private const LOCK_ACTOR = LTK_OPTION_PREFIX . 'lock_actor';
 
     /**
      * Inizializza gli hook del lockdown.
@@ -110,7 +110,7 @@ class LockdownEngine {
         }
 
         // Permetti l'accesso all'endpoint REST del plugin.
-        if ( $this->is_wpc_api_request() ) {
+        if ( $this->is_ltk_api_request() ) {
             return;
         }
 
@@ -132,15 +132,15 @@ class LockdownEngine {
         }
 
         // Permetti AJAX per il plugin stesso.
-        if ( wp_doing_ajax() && isset( $_REQUEST['action'] ) && str_starts_with( $_REQUEST['action'], 'wpc_' ) ) {
+        if ( wp_doing_ajax() && isset( $_REQUEST['action'] ) && str_starts_with( $_REQUEST['action'], 'ltk_' ) ) {
             return;
         }
 
         // Blocca l'accesso.
         wp_die(
-            '<h1>' . esc_html__( 'Accesso Limitato', 'wp-control' ) . '</h1>' .
-            '<p>' . esc_html__( 'L\'accesso all\'area di amministrazione è temporaneamente limitato. Per sbloccare il sito, accedi al pannello WP Control Center.', 'wp-control' ) . '</p>',
-            esc_html__( 'Sito Protetto', 'wp-control' ),
+            '<h1>' . esc_html__( 'Accesso Limitato', 'wp-ltk' ) . '</h1>' .
+            '<p>' . esc_html__( 'L\'accesso all\'area di amministrazione è temporaneamente limitato. Per sbloccare il sito, accedi al pannello Pannello di Gestione.', 'wp-ltk' ) . '</p>',
+            esc_html__( 'Sito Protetto', 'wp-ltk' ),
             [ 'response' => 503 ]
         );
     }
@@ -158,9 +158,9 @@ class LockdownEngine {
         }
 
         wp_die(
-            '<h1>' . esc_html__( 'Accesso Bloccato', 'wp-control' ) . '</h1>' .
-            '<p>' . esc_html__( 'L\'accesso al sito è temporaneamente sospeso per motivi di sicurezza.', 'wp-control' ) . '</p>',
-            esc_html__( 'Login Bloccato - WP Control', 'wp-control' ),
+            '<h1>' . esc_html__( 'Accesso Bloccato', 'wp-ltk' ) . '</h1>' .
+            '<p>' . esc_html__( 'L\'accesso al sito è temporaneamente sospeso per motivi di sicurezza.', 'wp-ltk' ) . '</p>',
+            esc_html__( 'Login Bloccato', 'wp-ltk' ),
             [ 'response' => 503 ]
         );
     }
@@ -201,13 +201,13 @@ class LockdownEngine {
         }
 
         // Permetti le richieste autenticate e quelle del plugin.
-        if ( is_user_logged_in() || $this->is_wpc_api_request() ) {
+        if ( is_user_logged_in() || $this->is_ltk_api_request() ) {
             return $result;
         }
 
         return new \WP_Error(
             'rest_disabled',
-            __( 'L\'accesso alla REST API è temporaneamente disabilitato.', 'wp-control' ),
+            __( 'L\'accesso alla REST API è temporaneamente disabilitato.', 'wp-ltk' ),
             [ 'status' => 503 ]
         );
     }
@@ -216,7 +216,7 @@ class LockdownEngine {
      * Mostra la pagina di blocco personalizzata.
      */
     private function show_lock_page(): void {
-        $template = WPC_PLUGIN_DIR . 'templates/lock-page.php';
+        $template = LTK_PLUGIN_DIR . 'templates/lock-page.php';
 
         if ( file_exists( $template ) ) {
             status_header( 503 );
@@ -236,8 +236,7 @@ class LockdownEngine {
         echo '.container{text-align:center;padding:2rem;max-width:600px}.icon{font-size:4rem;margin-bottom:1rem}h1{margin-bottom:0.5rem}p{color:#666}</style></head>';
         echo '<body><div class="container"><div class="icon">&#128274;</div>';
         echo '<h1>Sito Temporaneamente Protetto</h1>';
-        echo '<p>L\'accesso a questo sito è attualmente limitato da WP Control.</p>';
-        echo '<p>Se sei il proprietario, accedi tramite il pannello di controllo remoto.</p>';
+        echo '<p>L\'accesso a questo sito è attualmente limitato per motivi di sicurezza.</p>';
         echo '</div></body></html>';
         exit;
     }
@@ -246,7 +245,7 @@ class LockdownEngine {
      * Verifica se l'IP corrente è nella lista degli IP autorizzati.
      */
     private function is_ip_allowed(): bool {
-        $allowed_ips = get_option( WPC_OPTION_PREFIX . 'allowed_ips', '' );
+        $allowed_ips = get_option( LTK_OPTION_PREFIX . 'allowed_ips', '' );
         if ( empty( $allowed_ips ) ) {
             return false;
         }
@@ -260,9 +259,9 @@ class LockdownEngine {
     /**
      * Verifica se la richiesta è diretta all'API del plugin.
      */
-    private function is_wpc_api_request(): bool {
+    private function is_ltk_api_request(): bool {
         $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-        return str_contains( $request_uri, '/wp-json/wp-control/v1/' );
+        return str_contains( $request_uri, '/wp-json/wp-ltk/v1/' );
     }
 
     /**
@@ -294,7 +293,7 @@ class LockdownEngine {
      * Verifica se un'opzione booleana del plugin è attiva.
      */
     private function is_option_enabled( string $key ): bool {
-        return (bool) get_option( WPC_OPTION_PREFIX . $key, false );
+        return (bool) get_option( LTK_OPTION_PREFIX . $key, false );
     }
 
     /**
@@ -302,7 +301,7 @@ class LockdownEngine {
      */
     private function log_event( string $type, string $description ): void {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_audit_log';
+        $table = $wpdb->prefix . 'ltk_tpl_log';
 
         $wpdb->insert( $table, [
             'event_type'        => $type,

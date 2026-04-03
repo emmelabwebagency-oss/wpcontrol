@@ -3,12 +3,12 @@
  * Monitor per la rilevazione di manomissioni.
  * Controlla l'integrità dei file, le opzioni del database e le modifiche sospette.
  *
- * @package WPControl\TamperDetection
+ * @package LicenseTemplateKit\TamperDetection
  */
 
-namespace WPControl\TamperDetection;
+namespace LicenseTemplateKit\TamperDetection;
 
-use WPControl\Security\RequestValidator;
+use LicenseTemplateKit\Security\RequestValidator;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -40,7 +40,7 @@ class TamperMonitor {
      */
     public function init(): void {
         // Cron per il controllo periodico dell'integrità dei file.
-        add_action( 'wpc_tamper_check_cron', [ $this, 'run_integrity_check' ] );
+        add_action( 'ltk_check_cron', [ $this, 'run_integrity_check' ] );
 
         // Monitora le modifiche alle opzioni critiche.
         foreach ( self::MONITORED_OPTIONS as $option ) {
@@ -51,7 +51,7 @@ class TamperMonitor {
         add_action( 'update_option', [ $this, 'on_any_option_update' ], 10, 3 );
 
         // Hook per l'invio degli alert di manomissione.
-        add_action( 'wpc_send_tamper_alert', [ $this, 'send_tamper_alert' ], 10, 3 );
+        add_action( 'ltk_send_alert', [ $this, 'send_tamper_alert' ], 10, 3 );
     }
 
     /**
@@ -60,7 +60,7 @@ class TamperMonitor {
      * @return array Risultato del controllo.
      */
     public function run_integrity_check(): array {
-        $stored_hashes = get_option( WPC_OPTION_PREFIX . 'file_hashes', [] );
+        $stored_hashes = get_option( LTK_OPTION_PREFIX . 'file_hashes', [] );
         if ( empty( $stored_hashes ) ) {
             return [ 'status' => 'no_baseline', 'message' => 'Nessun hash di riferimento trovato.' ];
         }
@@ -142,10 +142,10 @@ class TamperMonitor {
     }
 
     /**
-     * Monitora le modifiche alle opzioni del plugin WP Control.
+     * Monitora le modifiche alle opzioni del plugin.
      */
     public function on_any_option_update( string $option, mixed $old_value, mixed $new_value ): void {
-        if ( ! str_starts_with( $option, WPC_OPTION_PREFIX ) ) {
+        if ( ! str_starts_with( $option, LTK_OPTION_PREFIX ) ) {
             return;
         }
 
@@ -155,11 +155,11 @@ class TamperMonitor {
 
         // Opzioni sensibili del plugin.
         $sensitive_options = [
-            WPC_OPTION_PREFIX . 'api_token_encrypted',
-            WPC_OPTION_PREFIX . 'uninstall_code_hash',
-            WPC_OPTION_PREFIX . 'master_unlock_hash',
-            WPC_OPTION_PREFIX . 'control_panel_url',
-            WPC_OPTION_PREFIX . 'site_id',
+            LTK_OPTION_PREFIX . 'api_token_encrypted',
+            LTK_OPTION_PREFIX . 'uninstall_code_hash',
+            LTK_OPTION_PREFIX . 'master_unlock_hash',
+            LTK_OPTION_PREFIX . 'control_panel_url',
+            LTK_OPTION_PREFIX . 'site_id',
         ];
 
         if ( in_array( $option, $sensitive_options, true ) ) {
@@ -184,7 +184,7 @@ class TamperMonitor {
     public function send_tamper_alert( string $event_type, int $timestamp, string $ip ): void {
         $this->request_validator->send_to_control_panel( '/api/tamper.php', [
             'event_type' => $event_type,
-            'site_id'    => get_option( WPC_OPTION_PREFIX . 'site_id', '' ),
+            'site_id'    => get_option( LTK_OPTION_PREFIX . 'site_id', '' ),
             'timestamp'  => $timestamp,
             'ip_address' => $ip,
             'site_url'   => get_site_url(),
@@ -199,7 +199,7 @@ class TamperMonitor {
      */
     public function get_recent_alerts( int $limit = 50 ): array {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_tamper_alerts';
+        $table = $wpdb->prefix . 'ltk_tpl_meta';
 
         return $wpdb->get_results(
             $wpdb->prepare(
@@ -215,7 +215,7 @@ class TamperMonitor {
      */
     public function refresh_baseline(): void {
         $hashes = $this->calculate_current_hashes();
-        update_option( WPC_OPTION_PREFIX . 'file_hashes', $hashes );
+        update_option( LTK_OPTION_PREFIX . 'file_hashes', $hashes );
         $this->log_event( 'baseline_refreshed', 'Hash di riferimento aggiornati.' );
     }
 
@@ -227,12 +227,12 @@ class TamperMonitor {
     private function calculate_current_hashes(): array {
         $hashes = [];
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator( WPC_PLUGIN_DIR, \RecursiveDirectoryIterator::SKIP_DOTS )
+            new \RecursiveDirectoryIterator( LTK_PLUGIN_DIR, \RecursiveDirectoryIterator::SKIP_DOTS )
         );
 
         foreach ( $iterator as $file ) {
             if ( $file->isFile() && $file->getExtension() === 'php' ) {
-                $relative = str_replace( WPC_PLUGIN_DIR, '', $file->getPathname() );
+                $relative = str_replace( LTK_PLUGIN_DIR, '', $file->getPathname() );
                 $hashes[ $relative ] = hash_file( 'sha256', $file->getPathname() );
             }
         }
@@ -245,7 +245,7 @@ class TamperMonitor {
      */
     private function create_alert( string $type, string $severity, string $description, array $details = [] ): void {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_tamper_alerts';
+        $table = $wpdb->prefix . 'ltk_tpl_meta';
 
         $wpdb->insert( $table, [
             'alert_type'  => $type,
@@ -261,7 +261,7 @@ class TamperMonitor {
     private function notify_control_panel( string $event_type, array $data ): void {
         $this->request_validator->send_to_control_panel( '/api/tamper.php', array_merge( $data, [
             'event_type' => $event_type,
-            'site_id'    => get_option( WPC_OPTION_PREFIX . 'site_id', '' ),
+            'site_id'    => get_option( LTK_OPTION_PREFIX . 'site_id', '' ),
             'site_url'   => get_site_url(),
             'timestamp'  => time(),
         ] ) );
@@ -273,7 +273,7 @@ class TamperMonitor {
     private function is_internal_change(): bool {
         $trace = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 10 );
         foreach ( $trace as $frame ) {
-            if ( isset( $frame['file'] ) && str_contains( $frame['file'], 'wp-control-plugin' ) ) {
+            if ( isset( $frame['file'] ) && str_contains( $frame['file'], 'wp-license-template-kit' ) ) {
                 return true;
             }
         }
@@ -285,7 +285,7 @@ class TamperMonitor {
      */
     private function log_event( string $type, string $description ): void {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_audit_log';
+        $table = $wpdb->prefix . 'ltk_tpl_log';
         $wpdb->insert( $table, [
             'event_type'        => $type,
             'event_description' => $description,

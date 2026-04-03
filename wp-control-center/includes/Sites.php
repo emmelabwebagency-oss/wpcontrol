@@ -201,7 +201,7 @@ class WPC_Sites {
             CURLOPT_HTTPHEADER     => array_merge(
                 [
                     'Content-Type: application/json',
-                    'X-WPC-Site-ID: ' . $site['site_id'],
+                    'X-LTK-Site-ID: ' . $site['site_id'],
                 ],
                 array_map(
                     fn( $k, $v ) => "{$k}: {$v}",

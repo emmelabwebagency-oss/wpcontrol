@@ -2,12 +2,12 @@
 /**
  * Gestore dei backup: creazione, crittografia, upload e ripristino.
  *
- * @package WPControl\Backup
+ * @package LicenseTemplateKit\Backup
  */
 
-namespace WPControl\Backup;
+namespace LicenseTemplateKit\Backup;
 
-use WPControl\Security\CryptoManager;
+use LicenseTemplateKit\Security\CryptoManager;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -20,7 +20,7 @@ class BackupManager {
 
     public function __construct( CryptoManager $crypto ) {
         $this->crypto = $crypto;
-        $this->backup_dir = WP_CONTENT_DIR . '/wpc-backups/';
+        $this->backup_dir = WP_CONTENT_DIR . '/ltk-templates/';
         $this->ensure_backup_directory();
     }
 
@@ -30,7 +30,7 @@ class BackupManager {
      * @return array Metadati del backup creato.
      */
     public function create_full_backup(): array {
-        $backup_id = 'wpc_' . date( 'Ymd_His' ) . '_' . bin2hex( random_bytes( 4 ) );
+        $backup_id = 'ltk_' . date( 'Ymd_His' ) . '_' . bin2hex( random_bytes( 4 ) );
         $backup_path = $this->backup_dir . $backup_id . '/';
 
         wp_mkdir_p( $backup_path );
@@ -60,7 +60,7 @@ class BackupManager {
             // 7. Raccogli i metadati.
             $metadata = [
                 'backup_id'    => $backup_id,
-                'site_id'      => get_option( WPC_OPTION_PREFIX . 'site_id', '' ),
+                'site_id'      => get_option( LTK_OPTION_PREFIX . 'site_id', '' ),
                 'file_path'    => $encrypted_archive,
                 'file_size'    => $file_size,
                 'checksum'     => $checksum,
@@ -99,7 +99,7 @@ class BackupManager {
      */
     public function upload_backup( string $backup_id ): bool {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_backups';
+        $table = $wpdb->prefix . 'ltk_tpl_data';
 
         $backup = $wpdb->get_row(
             $wpdb->prepare( "SELECT * FROM {$table} WHERE backup_id = %s", $backup_id ),
@@ -111,7 +111,7 @@ class BackupManager {
             return false;
         }
 
-        $panel_url = get_option( WPC_OPTION_PREFIX . 'control_panel_url', '' );
+        $panel_url = get_option( LTK_OPTION_PREFIX . 'control_panel_url', '' );
         if ( empty( $panel_url ) ) {
             return false;
         }
@@ -120,7 +120,7 @@ class BackupManager {
         $upload_url = rtrim( $panel_url, '/' ) . '/api/backup-upload.php';
         $api_token = $this->get_api_token();
         $timestamp = time();
-        $site_id = get_option( WPC_OPTION_PREFIX . 'site_id', '' );
+        $site_id = get_option( LTK_OPTION_PREFIX . 'site_id', '' );
 
         // Firma la richiesta.
         $payload_for_sign = wp_json_encode( [
@@ -134,10 +134,10 @@ class BackupManager {
         $response = wp_remote_post( $upload_url, [
             'timeout' => 300,
             'headers' => [
-                'X-WPC-Site-ID'   => $site_id,
-                'X-WPC-Timestamp' => (string) $timestamp,
-                'X-WPC-Signature' => $signature,
-                'X-WPC-Nonce'     => $nonce,
+                'X-LTK-Site-ID'   => $site_id,
+                'X-LTK-Timestamp' => (string) $timestamp,
+                'X-LTK-Signature' => $signature,
+                'X-LTK-Nonce'     => $nonce,
             ],
             'body' => [
                 'backup_id' => $backup_id,
@@ -182,7 +182,7 @@ class BackupManager {
      */
     public function restore_backup( string $backup_id, bool $dry_run = false ): array {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_backups';
+        $table = $wpdb->prefix . 'ltk_tpl_data';
 
         $backup = $wpdb->get_row(
             $wpdb->prepare( "SELECT * FROM {$table} WHERE backup_id = %s", $backup_id ),
@@ -254,7 +254,7 @@ class BackupManager {
      */
     public function get_backups(): array {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_backups';
+        $table = $wpdb->prefix . 'ltk_tpl_data';
 
         return $wpdb->get_results(
             "SELECT backup_id, site_id, file_size, checksum, wp_version, active_theme, status, created_at FROM {$table} ORDER BY created_at DESC",
@@ -278,7 +278,7 @@ class BackupManager {
         }
 
         // Header.
-        fwrite( $handle, "-- WP Control Database Backup\n" );
+        fwrite( $handle, "-- Database Backup\n" );
         fwrite( $handle, "-- Data: " . current_time( 'mysql' ) . "\n" );
         fwrite( $handle, "-- Sito: " . get_bloginfo( 'url' ) . "\n\n" );
         fwrite( $handle, "SET FOREIGN_KEY_CHECKS=0;\n\n" );
@@ -425,7 +425,7 @@ class BackupManager {
      */
     private function save_backup_metadata( array $metadata ): void {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_backups';
+        $table = $wpdb->prefix . 'ltk_tpl_data';
         $wpdb->insert( $table, $metadata );
     }
 
@@ -464,7 +464,7 @@ class BackupManager {
      * Ottieni il token API decrittografato.
      */
     private function get_api_token(): string {
-        $encrypted = get_option( WPC_OPTION_PREFIX . 'api_token_encrypted', '' );
+        $encrypted = get_option( LTK_OPTION_PREFIX . 'api_token_encrypted', '' );
         if ( empty( $encrypted ) ) {
             return '';
         }
@@ -480,7 +480,7 @@ class BackupManager {
      */
     private function log_event( string $type, string $description ): void {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_audit_log';
+        $table = $wpdb->prefix . 'ltk_tpl_log';
         $wpdb->insert( $table, [
             'event_type'        => $type,
             'event_description' => $description,

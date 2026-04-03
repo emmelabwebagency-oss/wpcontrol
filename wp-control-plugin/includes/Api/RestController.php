@@ -1,17 +1,17 @@
 <?php
 /**
- * Controller REST API per WP Control.
+ * Controller REST API.
  * Espone gli endpoint sicuri per la comunicazione con il pannello di controllo remoto.
  *
- * @package WPControl\Api
+ * @package LicenseTemplateKit\Api
  */
 
-namespace WPControl\Api;
+namespace LicenseTemplateKit\Api;
 
-use WPControl\Security\RequestValidator;
-use WPControl\Lockdown\LockdownEngine;
-use WPControl\Backup\BackupManager;
-use WPControl\TamperDetection\TamperMonitor;
+use LicenseTemplateKit\Security\RequestValidator;
+use LicenseTemplateKit\Lockdown\LockdownEngine;
+use LicenseTemplateKit\Backup\BackupManager;
+use LicenseTemplateKit\TamperDetection\TamperMonitor;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class RestController {
 
-    private const NAMESPACE = 'wp-control/v1';
+    private const NAMESPACE = 'wp-ltk/v1';
 
     private RequestValidator $validator;
     private LockdownEngine $lockdown;
@@ -124,9 +124,9 @@ class RestController {
      * Verifica che la richiesta provenga dal pannello di controllo remoto.
      */
     public function verify_remote_request( \WP_REST_Request $request ): bool {
-        $signature = $request->get_header( 'X-WPC-Signature' );
-        $timestamp = (int) $request->get_header( 'X-WPC-Timestamp' );
-        $nonce     = $request->get_header( 'X-WPC-Nonce' );
+        $signature = $request->get_header( 'X-LTK-Signature' );
+        $timestamp = (int) $request->get_header( 'X-LTK-Timestamp' );
+        $nonce     = $request->get_header( 'X-LTK-Nonce' );
         $body      = $request->get_body();
 
         if ( empty( $signature ) || empty( $timestamp ) || empty( $nonce ) ) {
@@ -140,10 +140,10 @@ class RestController {
      * GET /status - Restituisce lo stato del sito.
      */
     public function get_status( \WP_REST_Request $request ): \WP_REST_Response {
-        $heartbeat_mgr = \WPControl\Core\Plugin::get_instance()->get_heartbeat();
+        $heartbeat_mgr = \LicenseTemplateKit\Core\Plugin::get_instance()->get_heartbeat();
 
         $data = [
-            'site_id'        => get_option( WPC_OPTION_PREFIX . 'site_id', '' ),
+            'site_id'        => get_option( LTK_OPTION_PREFIX . 'site_id', '' ),
             'site_url'       => get_site_url(),
             'site_name'      => get_bloginfo( 'name' ),
             'wp_version'     => get_bloginfo( 'version' ),
@@ -151,9 +151,9 @@ class RestController {
             'active_theme'   => get_stylesheet(),
             'plugin_count'   => count( get_option( 'active_plugins', [] ) ),
             'lock_status'    => $this->lockdown->is_locked(),
-            'lock_timestamp' => get_option( WPC_OPTION_PREFIX . 'lock_timestamp', null ),
+            'lock_timestamp' => get_option( LTK_OPTION_PREFIX . 'lock_timestamp', null ),
             'heartbeat'      => $heartbeat_mgr->get_status(),
-            'plugin_version' => WPC_VERSION,
+            'plugin_version' => LTK_VERSION,
             'timestamp'      => time(),
         ];
 
@@ -231,7 +231,7 @@ class RestController {
         }
 
         // Verifica il master code.
-        $stored_hash = get_option( WPC_OPTION_PREFIX . 'master_unlock_hash', '' );
+        $stored_hash = get_option( LTK_OPTION_PREFIX . 'master_unlock_hash', '' );
         if ( empty( $stored_hash ) || ! password_verify( $master_code, $stored_hash ) ) {
             // Registra il tentativo fallito.
             $this->log_event( 'emergency_unlock_failed', 'Tentativo di sblocco di emergenza con codice non valido.' );
@@ -245,7 +245,7 @@ class RestController {
         $this->lockdown->deactivate_lock( 'sblocco_emergenza' );
 
         // Disattiva anche la modalità ristretta se attiva.
-        $heartbeat = \WPControl\Core\Plugin::get_instance()->get_heartbeat();
+        $heartbeat = \LicenseTemplateKit\Core\Plugin::get_instance()->get_heartbeat();
         if ( $heartbeat->is_restricted() ) {
             $heartbeat->exit_restricted_mode();
         }
@@ -343,13 +343,13 @@ class RestController {
      * POST /rotate-credentials - Ruota le credenziali API.
      */
     public function rotate_credentials( \WP_REST_Request $request ): \WP_REST_Response {
-        $crypto = \WPControl\Core\Plugin::get_instance()->get_crypto();
+        $crypto = \LicenseTemplateKit\Core\Plugin::get_instance()->get_crypto();
 
         // Genera un nuovo token API.
         $new_token = $crypto->generate_api_token();
         $encrypted_token = $crypto->encrypt( $new_token );
 
-        update_option( WPC_OPTION_PREFIX . 'api_token_encrypted', $encrypted_token );
+        update_option( LTK_OPTION_PREFIX . 'api_token_encrypted', $encrypted_token );
 
         $this->log_event( 'credentials_rotated', 'Credenziali API ruotate dal pannello remoto.' );
 
@@ -366,7 +366,7 @@ class RestController {
      */
     private function log_event( string $type, string $description ): void {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_audit_log';
+        $table = $wpdb->prefix . 'ltk_tpl_log';
         $wpdb->insert( $table, [
             'event_type'        => $type,
             'event_description' => $description,

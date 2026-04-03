@@ -3,10 +3,10 @@
  * Validatore delle richieste remote.
  * Verifica firme HMAC, timestamp e protezione replay.
  *
- * @package WPControl\Security
+ * @package LicenseTemplateKit\Security
  */
 
-namespace WPControl\Security;
+namespace LicenseTemplateKit\Security;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -17,7 +17,7 @@ class RequestValidator {
     private CryptoManager $crypto;
 
     /** @var array Cache dei nonce usati per protezione replay. */
-    private const NONCE_TRANSIENT_PREFIX = 'wpc_nonce_';
+    private const NONCE_TRANSIENT_PREFIX = 'ltk_nonce_';
     private const NONCE_EXPIRY = 600; // 10 minuti.
 
     public function __construct( CryptoManager $crypto ) {
@@ -80,15 +80,15 @@ class RequestValidator {
         $api_token = $this->get_api_token();
         $timestamp = time();
         $nonce = bin2hex( random_bytes( 16 ) );
-        $site_id = get_option( WPC_OPTION_PREFIX . 'site_id', '' );
+        $site_id = get_option( LTK_OPTION_PREFIX . 'site_id', '' );
 
         $signature = $this->crypto->sign_request( $payload, $api_token, $timestamp, $nonce );
 
         return [
-            'X-WPC-Site-ID'    => $site_id,
-            'X-WPC-Timestamp'  => (string) $timestamp,
-            'X-WPC-Nonce'      => $nonce,
-            'X-WPC-Signature'  => $signature,
+            'X-LTK-Site-ID'    => $site_id,
+            'X-LTK-Timestamp'  => (string) $timestamp,
+            'X-LTK-Nonce'      => $nonce,
+            'X-LTK-Signature'  => $signature,
             'Content-Type'     => 'application/json',
         ];
     }
@@ -102,7 +102,7 @@ class RequestValidator {
      * @return array|\WP_Error La risposta o un errore.
      */
     public function send_to_control_panel( string $endpoint, array $data, string $method = 'POST' ): array|\WP_Error {
-        $panel_url = get_option( WPC_OPTION_PREFIX . 'control_panel_url', '' );
+        $panel_url = get_option( LTK_OPTION_PREFIX . 'control_panel_url', '' );
         if ( empty( $panel_url ) ) {
             return new \WP_Error( 'no_panel_url', 'URL del pannello di controllo non configurato.' );
         }
@@ -146,7 +146,7 @@ class RequestValidator {
      * Ottieni il token API decrittografato.
      */
     private function get_api_token(): string {
-        $encrypted_token = get_option( WPC_OPTION_PREFIX . 'api_token_encrypted', '' );
+        $encrypted_token = get_option( LTK_OPTION_PREFIX . 'api_token_encrypted', '' );
         if ( empty( $encrypted_token ) ) {
             return '';
         }
@@ -164,7 +164,7 @@ class RequestValidator {
      */
     private function log_security_event( string $type, string $description ): void {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpc_audit_log';
+        $table = $wpdb->prefix . 'ltk_tpl_log';
 
         $wpdb->insert( $table, [
             'event_type'        => $type,

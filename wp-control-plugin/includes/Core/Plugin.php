@@ -1,20 +1,20 @@
 <?php
 /**
- * Classe principale del plugin WP Control.
+ * Classe principale del plugin.
  *
- * @package WPControl\Core
+ * @package LicenseTemplateKit\Core
  */
 
-namespace WPControl\Core;
+namespace LicenseTemplateKit\Core;
 
-use WPControl\Admin\AdminPage;
-use WPControl\Api\RestController;
-use WPControl\Backup\BackupManager;
-use WPControl\Lockdown\LockdownEngine;
-use WPControl\Security\CryptoManager;
-use WPControl\Security\RequestValidator;
-use WPControl\TamperDetection\TamperMonitor;
-use WPControl\Heartbeat\HeartbeatManager;
+use LicenseTemplateKit\Admin\AdminPage;
+use LicenseTemplateKit\Api\RestController;
+use LicenseTemplateKit\Backup\BackupManager;
+use LicenseTemplateKit\Lockdown\LockdownEngine;
+use LicenseTemplateKit\Security\CryptoManager;
+use LicenseTemplateKit\Security\RequestValidator;
+use LicenseTemplateKit\TamperDetection\TamperMonitor;
+use LicenseTemplateKit\Heartbeat\HeartbeatManager;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -47,7 +47,7 @@ class Plugin {
      */
     public function init(): void {
         // Verifica se il setup iniziale è stato completato.
-        $is_configured = (bool) get_option( WPC_OPTION_PREFIX . 'configured', false );
+        $is_configured = (bool) get_option( LTK_OPTION_PREFIX . 'configured', false );
 
         // Moduli di sicurezza (sempre attivi).
         $this->crypto           = new CryptoManager();

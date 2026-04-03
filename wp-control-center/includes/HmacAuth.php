@@ -99,10 +99,10 @@ class WPC_HmacAuth {
     public static function extract_headers(): ?array {
         $headers = self::get_all_headers();
 
-        $site_id   = $headers['X-WPC-Site-ID']   ?? $headers['X-WPC-Site-Id']   ?? $headers['x-wpc-site-id']   ?? $headers['X-WPC-SITE-ID'] ?? null;
-        $signature = $headers['X-WPC-Signature']  ?? $headers['x-wpc-signature']  ?? $headers['X-WPC-SIGNATURE'] ?? null;
-        $timestamp = $headers['X-WPC-Timestamp']  ?? $headers['x-wpc-timestamp']  ?? $headers['X-WPC-TIMESTAMP'] ?? null;
-        $nonce     = $headers['X-WPC-Nonce']      ?? $headers['x-wpc-nonce']      ?? $headers['X-WPC-NONCE']     ?? null;
+        $site_id   = $headers['X-LTK-Site-ID']   ?? $headers['X-LTK-Site-Id']   ?? $headers['x-wpc-site-id']   ?? $headers['X-LTK-SITE-ID'] ?? null;
+        $signature = $headers['X-LTK-Signature']  ?? $headers['x-wpc-signature']  ?? $headers['X-LTK-SIGNATURE'] ?? null;
+        $timestamp = $headers['X-LTK-Timestamp']  ?? $headers['x-wpc-timestamp']  ?? $headers['X-LTK-TIMESTAMP'] ?? null;
+        $nonce     = $headers['X-LTK-Nonce']      ?? $headers['x-wpc-nonce']      ?? $headers['X-LTK-NONCE']     ?? null;
 
         if ( ! $site_id || ! $signature || ! $timestamp || ! $nonce ) {
             return null;
@@ -158,9 +158,9 @@ class WPC_HmacAuth {
         $signature = hash_hmac( 'sha256', $payload, $api_token );
 
         return [
-            'X-WPC-Signature' => $signature,
-            'X-WPC-Timestamp' => $timestamp,
-            'X-WPC-Nonce'     => $nonce,
+            'X-LTK-Signature' => $signature,
+            'X-LTK-Timestamp' => $timestamp,
+            'X-LTK-Nonce'     => $nonce,
         ];
     }
 

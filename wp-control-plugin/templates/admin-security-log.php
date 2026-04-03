@@ -1,8 +1,8 @@
 <?php
 /**
- * Template: Log di Sicurezza di WP Control.
+ * Template: Log di Sicurezza.
  *
- * @package WPControl
+ * @package LicenseTemplateKit
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,21 +10,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 
-<div class="wrap wpc-security-log">
-    <h1>&#128220; WP Control — Log di Sicurezza</h1>
+<div class="wrap ltk-security-log">
+    <h1>&#128220; WP License Template KIT — Log di Sicurezza</h1>
 
     <?php if ( empty( $logs ) ) : ?>
-        <p class="description"><?php esc_html_e( 'Nessun evento registrato.', 'wp-control' ); ?></p>
+        <p class="description"><?php esc_html_e( 'Nessun evento registrato.', 'wp-ltk' ); ?></p>
     <?php else : ?>
         <table class="widefat striped">
             <thead>
                 <tr>
-                    <th><?php esc_html_e( 'ID', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'Tipo Evento', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'Descrizione', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'Attore', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'IP', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'Data', 'wp-control' ); ?></th>
+                    <th><?php esc_html_e( 'ID', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'Tipo Evento', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'Descrizione', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'Attore', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'IP', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'Data', 'wp-ltk' ); ?></th>
                 </tr>
             </thead>
             <tbody>

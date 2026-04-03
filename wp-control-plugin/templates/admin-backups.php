@@ -1,8 +1,8 @@
 <?php
 /**
- * Template: Pagina Backup di WP Control.
+ * Template: Pagina Backup.
  *
- * @package WPControl
+ * @package LicenseTemplateKit
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,28 +10,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 
-<div class="wrap wpc-backups">
-    <h1>&#128190; WP Control — Backup</h1>
+<div class="wrap ltk-templates">
+    <h1>&#128190; WP License Template KIT — Backup</h1>
 
     <p class="description">
-        <?php esc_html_e( 'I backup vengono creati automaticamente prima di ogni operazione di blocco. Puoi anche creare backup manuali dal pannello di controllo remoto.', 'wp-control' ); ?>
+        <?php esc_html_e( 'I backup vengono creati automaticamente prima di ogni operazione di blocco. Puoi anche creare backup manuali dal pannello di controllo remoto.', 'wp-ltk' ); ?>
     </p>
 
     <?php if ( empty( $backups ) ) : ?>
         <div class="notice notice-info">
-            <p><?php esc_html_e( 'Nessun backup disponibile. I backup saranno creati automaticamente prima delle operazioni di blocco.', 'wp-control' ); ?></p>
+            <p><?php esc_html_e( 'Nessun backup disponibile. I backup saranno creati automaticamente prima delle operazioni di blocco.', 'wp-ltk' ); ?></p>
         </div>
     <?php else : ?>
         <table class="widefat striped">
             <thead>
                 <tr>
-                    <th><?php esc_html_e( 'ID Backup', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'Dimensione', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'WP Version', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'Tema', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'Stato', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'Data', 'wp-control' ); ?></th>
-                    <th><?php esc_html_e( 'Checksum', 'wp-control' ); ?></th>
+                    <th><?php esc_html_e( 'ID Backup', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'Dimensione', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'WP Version', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'Tema', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'Stato', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'Data', 'wp-ltk' ); ?></th>
+                    <th><?php esc_html_e( 'Checksum', 'wp-ltk' ); ?></th>
                 </tr>
             </thead>
             <tbody>
