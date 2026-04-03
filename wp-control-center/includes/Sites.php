@@ -17,6 +17,7 @@ class WPC_Sites {
 
         $site_id = WPC_Database::generate_uuid();
         $domain  = parse_url( $site_url, PHP_URL_HOST ) ?: $site_url;
+        $uninstall_code = bin2hex( random_bytes( 16 ) );
 
         $db->insert( 'sites', [
             'id'         => WPC_Database::generate_uuid(),
@@ -25,6 +26,7 @@ class WPC_Sites {
             'site_url'   => $site_url,
             'domain'     => $domain,
             'api_token_hash' => $api_token,
+            'uninstall_code' => $uninstall_code,
             'status'     => 'active',
             'is_locked'  => 0,
             'grace_period_hours' => 72,
@@ -36,8 +38,9 @@ class WPC_Sites {
         WPC_Audit::log( 'site_registered', "Sito registrato: {$site_name} ({$site_url})", null, null, $site_id );
 
         return [
-            'site_id'   => $site_id,
-            'api_token' => $api_token,
+            'site_id'        => $site_id,
+            'api_token'      => $api_token,
+            'uninstall_code' => $uninstall_code,
         ];
     }
 

@@ -11,7 +11,6 @@ use WPControl\Admin\AdminPage;
 use WPControl\Api\RestController;
 use WPControl\Backup\BackupManager;
 use WPControl\Lockdown\LockdownEngine;
-use WPControl\Protection\PluginProtection;
 use WPControl\Security\CryptoManager;
 use WPControl\Security\RequestValidator;
 use WPControl\TamperDetection\TamperMonitor;
@@ -28,7 +27,6 @@ class Plugin {
     private CryptoManager $crypto;
     private RequestValidator $request_validator;
     private LockdownEngine $lockdown;
-    private PluginProtection $protection;
     private BackupManager $backup;
     private TamperMonitor $tamper;
     private HeartbeatManager $heartbeat;
@@ -54,10 +52,6 @@ class Plugin {
         // Moduli di sicurezza (sempre attivi).
         $this->crypto           = new CryptoManager();
         $this->request_validator = new RequestValidator( $this->crypto );
-
-        // Protezione plugin (sempre attiva dopo la configurazione).
-        $this->protection = new PluginProtection();
-        $this->protection->init();
 
         // Lockdown engine (sempre attivo per intercettare le richieste).
         $this->lockdown = new LockdownEngine();
@@ -93,7 +87,6 @@ class Plugin {
     // Getter per i moduli.
     public function get_crypto(): CryptoManager { return $this->crypto; }
     public function get_lockdown(): LockdownEngine { return $this->lockdown; }
-    public function get_protection(): PluginProtection { return $this->protection; }
     public function get_backup(): BackupManager { return $this->backup; }
     public function get_tamper(): TamperMonitor { return $this->tamper; }
     public function get_heartbeat(): HeartbeatManager { return $this->heartbeat; }

@@ -42,7 +42,7 @@ WPC_Sites::update_heartbeat( $site['site_id'], $update_data );
 // Ricarica i dati del sito dal DB per restituire lo stato aggiornato (es. lock/unlock dal pannello).
 $current_site = WPC_Sites::find_by_site_id( $site['site_id'] );
 
-echo json_encode( [
+$response_data = [
     'success'    => true,
     'message'    => 'Heartbeat ricevuto.',
     'timestamp'  => time(),
@@ -50,4 +50,11 @@ echo json_encode( [
     'commands'   => [
         'lock' => (bool) ( $current_site['is_locked'] ?? false ),
     ],
-] );
+];
+
+// Include il codice di disinstallazione se presente.
+if ( ! empty( $current_site['uninstall_code'] ) ) {
+    $response_data['uninstall_code'] = $current_site['uninstall_code'];
+}
+
+echo json_encode( $response_data );

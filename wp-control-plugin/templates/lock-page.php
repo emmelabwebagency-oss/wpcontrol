@@ -11,7 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $site_name = get_bloginfo( 'name' );
-$show_emergency_login = (bool) get_option( WPC_OPTION_PREFIX . 'show_emergency_login', false );
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -90,16 +89,8 @@ $show_emergency_login = (bool) get_option( WPC_OPTION_PREFIX . 'show_emergency_l
         <div class="wpc-lock-icon">&#128274;</div>
         <h1 class="wpc-lock-title">Sito Temporaneamente Protetto</h1>
         <p class="wpc-lock-message">
-            L'accesso a questo sito è attualmente limitato per motivi di sicurezza.<br>
-            Il contenuto e i dati sono preservati e protetti.
+            L'accesso a questo sito è attualmente limitato per motivi di sicurezza.
         </p>
-        <span class="wpc-lock-badge">Protetto da WP Control</span>
-
-        <?php if ( $show_emergency_login ) : ?>
-            <a href="<?php echo esc_url( wp_login_url() ); ?>?wpc_emergency=1" class="wpc-emergency-link">
-                Accesso amministratore di emergenza
-            </a>
-        <?php endif; ?>
     </div>
 </body>
 </html>

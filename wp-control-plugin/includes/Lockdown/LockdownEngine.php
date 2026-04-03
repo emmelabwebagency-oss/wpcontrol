@@ -136,18 +136,11 @@ class LockdownEngine {
             return;
         }
 
-        // Permetti l'accesso alla pagina di sblocco di emergenza.
-        if ( isset( $_GET['page'] ) && $_GET['page'] === 'wpc-emergency-unlock' ) {
-            return;
-        }
-
         // Blocca l'accesso.
         wp_die(
             '<h1>' . esc_html__( 'Accesso Limitato', 'wp-control' ) . '</h1>' .
-            '<p>' . esc_html__( 'Questo sito è attualmente protetto da WP Control. L\'accesso all\'area di amministrazione è temporaneamente limitato.', 'wp-control' ) . '</p>' .
-            '<p><a href="' . esc_url( admin_url( 'admin.php?page=wpc-emergency-unlock' ) ) . '">' .
-            esc_html__( 'Sblocco di emergenza', 'wp-control' ) . '</a></p>',
-            esc_html__( 'Sito Protetto - WP Control', 'wp-control' ),
+            '<p>' . esc_html__( 'L\'accesso all\'area di amministrazione è temporaneamente limitato. Per sbloccare il sito, accedi al pannello WP Control Center.', 'wp-control' ) . '</p>',
+            esc_html__( 'Sito Protetto', 'wp-control' ),
             [ 'response' => 503 ]
         );
     }

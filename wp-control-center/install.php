@@ -75,6 +75,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                     active_theme VARCHAR(255) DEFAULT NULL,
                     plugin_count INT DEFAULT 0,
                     last_heartbeat_at DATETIME DEFAULT NULL,
+                    uninstall_code VARCHAR(64) DEFAULT NULL,
                     ownership_enforcement TINYINT(1) NOT NULL DEFAULT 1,
                     grace_period_hours INT NOT NULL DEFAULT 72,
                     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

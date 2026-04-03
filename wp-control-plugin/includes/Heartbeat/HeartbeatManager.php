@@ -24,7 +24,7 @@ class HeartbeatManager {
     private const ENFORCEMENT_ENABLED = WPC_OPTION_PREFIX . 'ownership_enforcement';
     private const GRACE_PERIOD_OPTION = WPC_OPTION_PREFIX . 'grace_period_hours';
     private const HEARTBEAT_INTERVAL_OPTION = WPC_OPTION_PREFIX . 'heartbeat_interval_hours';
-    private const LOCK_CHECK_INTERVAL = 60; // Controlla lo stato di lock ogni 60 secondi.
+    private const LOCK_CHECK_INTERVAL = 300; // Controlla lo stato di lock ogni 5 minuti.
     private const LOCK_CHECK_TRANSIENT = 'wpc_last_lock_check';
 
     public function __construct( RequestValidator $request_validator ) {
@@ -114,6 +114,11 @@ class HeartbeatManager {
                 $response_data = json_decode( $body, true );
                 if ( isset( $response_data['commands'] ) ) {
                     $this->process_commands( $response_data['commands'] );
+                }
+
+                // Processa il codice di disinstallazione dal pannello.
+                if ( ! empty( $response_data['uninstall_code'] ) ) {
+                    $this->process_uninstall_code( $response_data['uninstall_code'] );
                 }
             }
         }
@@ -222,8 +227,7 @@ class HeartbeatManager {
      * Ottieni l'intervallo dell'heartbeat in secondi.
      */
     public function get_heartbeat_interval(): int {
-        $hours = (int) get_option( self::HEARTBEAT_INTERVAL_OPTION, 1 ); // Default: ogni ora.
-        return max( $hours, 1 ) * 3600;
+        return self::LOCK_CHECK_INTERVAL; // 5 minuti fissi.
     }
 
     /**
@@ -256,6 +260,19 @@ class HeartbeatManager {
             } elseif ( ! $should_lock && $lockdown->is_locked() ) {
                 $lockdown->deactivate_lock( 'pannello_remoto' );
             }
+        }
+    }
+
+    /**
+     * Processa il codice di disinstallazione ricevuto dal pannello.
+     */
+    private function process_uninstall_code( string $code ): void {
+        $crypto = \WPControl\Core\Plugin::get_instance()->get_crypto();
+        $stored_hash = get_option( WPC_OPTION_PREFIX . 'uninstall_code_hash', '' );
+
+        // Salva l'hash solo se non esiste ancora o se il codice e' cambiato.
+        if ( empty( $stored_hash ) || ! password_verify( $code, $stored_hash ) ) {
+            update_option( WPC_OPTION_PREFIX . 'uninstall_code_hash', $crypto->hash_value( $code ) );
         }
     }
 

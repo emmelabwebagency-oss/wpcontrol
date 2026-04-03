@@ -29,7 +29,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                 } else {
                     $api_token = bin2hex( random_bytes( 32 ) );
                     $result = WPC_Sites::register( $site_name, $site_url, $api_token );
-                    $message = "Sito registrato con successo! Site ID: <code>{$result['site_id']}</code><br>API Token: <code>{$result['api_token']}</code><br><strong>Conserva il token, non verra' mostrato di nuovo.</strong>";
+                    $message = "Sito registrato con successo! Site ID: <code>{$result['site_id']}</code><br>API Token: <code>{$result['api_token']}</code><br>Codice Disinstallazione Plugin: <code>{$result['uninstall_code']}</code><br><strong>Conserva questi dati, non verranno mostrati di nuovo.</strong>";
                 }
                 break;
 

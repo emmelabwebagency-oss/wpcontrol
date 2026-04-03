@@ -28,8 +28,6 @@ class AdminPage {
         add_action( 'admin_menu', [ $this, 'register_menus' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
         add_action( 'admin_init', [ $this, 'handle_setup_form' ] );
-        add_action( 'admin_init', [ $this, 'handle_emergency_unlock_form' ] );
-        add_action( 'admin_init', [ $this, 'handle_settings_form' ] );
 
         // Mostra avviso se non configurato.
         if ( ! get_option( WPC_OPTION_PREFIX . 'configured', false ) ) {
@@ -41,8 +39,6 @@ class AdminPage {
             add_action( 'admin_notices', [ $this, 'lock_mode_notice' ] );
         }
 
-        // Mostra errore di disattivazione non autorizzata.
-        add_action( 'admin_notices', [ $this, 'deactivation_error_notice' ] );
     }
 
     /**
@@ -98,16 +94,6 @@ class AdminPage {
             'manage_options',
             'wpc-security-log',
             [ $this, 'render_security_log' ]
-        );
-
-        // Sottomenu: Sblocco di Emergenza (visibile anche in lock mode).
-        add_submenu_page(
-            'wp-control',
-            __( 'Sblocco di Emergenza', 'wp-control' ),
-            __( 'Sblocco di Emergenza', 'wp-control' ),
-            'manage_options',
-            'wpc-emergency-unlock',
-            [ $this, 'render_emergency_unlock' ]
         );
 
         // Sottomenu: Setup (solo se non configurato).
@@ -179,14 +165,8 @@ class AdminPage {
      */
     public function render_settings(): void {
         $settings = [
-            'site_id'              => get_option( WPC_OPTION_PREFIX . 'site_id', '' ),
-            'control_panel_url'    => get_option( WPC_OPTION_PREFIX . 'control_panel_url', '' ),
-            'allowed_ips'          => get_option( WPC_OPTION_PREFIX . 'allowed_ips', '' ),
-            'disable_xmlrpc'       => get_option( WPC_OPTION_PREFIX . 'disable_xmlrpc', false ),
-            'restrict_rest_api'    => get_option( WPC_OPTION_PREFIX . 'restrict_rest_api', false ),
-            'ownership_enforcement' => get_option( WPC_OPTION_PREFIX . 'ownership_enforcement', false ),
-            'grace_period_hours'   => get_option( WPC_OPTION_PREFIX . 'grace_period_hours', 72 ),
-            'heartbeat_interval'   => get_option( WPC_OPTION_PREFIX . 'heartbeat_interval_hours', 1 ),
+            'site_id'           => get_option( WPC_OPTION_PREFIX . 'site_id', '' ),
+            'control_panel_url' => get_option( WPC_OPTION_PREFIX . 'control_panel_url', '' ),
         ];
 
         include WPC_PLUGIN_DIR . 'templates/admin-settings.php';
@@ -219,13 +199,6 @@ class AdminPage {
         $total_pages = ceil( $total / $per_page );
 
         include WPC_PLUGIN_DIR . 'templates/admin-security-log.php';
-    }
-
-    /**
-     * Renderizza la pagina di sblocco di emergenza.
-     */
-    public function render_emergency_unlock(): void {
-        include WPC_PLUGIN_DIR . 'templates/admin-emergency-unlock.php';
     }
 
     /**
@@ -267,27 +240,11 @@ class AdminPage {
         }
         update_option( WPC_OPTION_PREFIX . 'api_token_encrypted', $crypto->encrypt( $api_token ) );
 
-        // Master unlock code.
-        $master_code = sanitize_text_field( $_POST['master_unlock_code'] ?? '' );
-        if ( ! empty( $master_code ) ) {
-            update_option( WPC_OPTION_PREFIX . 'master_unlock_hash', $crypto->hash_value( $master_code ) );
-        }
-
-        // Uninstall code.
-        $uninstall_code = sanitize_text_field( $_POST['uninstall_code'] ?? '' );
-        if ( ! empty( $uninstall_code ) ) {
-            update_option( WPC_OPTION_PREFIX . 'uninstall_code_hash', $crypto->hash_value( $uninstall_code ) );
-        }
-
         // Control panel URL.
         $panel_url = esc_url_raw( $_POST['control_panel_url'] ?? '' );
         if ( ! empty( $panel_url ) ) {
             update_option( WPC_OPTION_PREFIX . 'control_panel_url', $panel_url );
         }
-
-        // IP autorizzati.
-        $allowed_ips = sanitize_text_field( $_POST['allowed_ips'] ?? '' );
-        update_option( WPC_OPTION_PREFIX . 'allowed_ips', $allowed_ips );
 
         // Segna come configurato.
         update_option( WPC_OPTION_PREFIX . 'configured', true );
@@ -312,70 +269,6 @@ class AdminPage {
         exit;
     }
 
-    /**
-     * Gestisce il form di sblocco di emergenza.
-     */
-    public function handle_emergency_unlock_form(): void {
-        if ( ! isset( $_POST['wpc_emergency_nonce'] ) || ! wp_verify_nonce( $_POST['wpc_emergency_nonce'], 'wpc_emergency_unlock' ) ) {
-            return;
-        }
-
-        $master_code = sanitize_text_field( $_POST['master_code'] ?? '' );
-        $stored_hash = get_option( WPC_OPTION_PREFIX . 'master_unlock_hash', '' );
-
-        if ( empty( $stored_hash ) || ! password_verify( $master_code, $stored_hash ) ) {
-            set_transient( 'wpc_emergency_error', __( 'Codice master non valido.', 'wp-control' ), 30 );
-            wp_safe_redirect( admin_url( 'admin.php?page=wpc-emergency-unlock&error=1' ) );
-            exit;
-        }
-
-        // Sblocca.
-        $this->plugin->get_lockdown()->deactivate_lock( 'sblocco_emergenza_locale' );
-
-        // Disattiva la modalità ristretta.
-        $this->plugin->get_heartbeat()->exit_restricted_mode();
-
-        set_transient( 'wpc_emergency_success', __( 'Sito sbloccato con successo.', 'wp-control' ), 30 );
-        wp_safe_redirect( admin_url( 'admin.php?page=wp-control&unlocked=1' ) );
-        exit;
-    }
-
-    /**
-     * Gestisce il form delle impostazioni.
-     */
-    public function handle_settings_form(): void {
-        if ( ! isset( $_POST['wpc_settings_nonce'] ) || ! wp_verify_nonce( $_POST['wpc_settings_nonce'], 'wpc_settings' ) ) {
-            return;
-        }
-
-        if ( ! current_user_can( 'manage_options' ) ) {
-            return;
-        }
-
-        // Aggiorna le impostazioni.
-        $settings_map = [
-            'allowed_ips'           => 'sanitize_text_field',
-            'disable_xmlrpc'        => 'boolval',
-            'restrict_rest_api'     => 'boolval',
-            'ownership_enforcement' => 'boolval',
-            'grace_period_hours'    => 'intval',
-            'heartbeat_interval_hours' => 'intval',
-        ];
-
-        foreach ( $settings_map as $key => $sanitizer ) {
-            $value = $_POST[ $key ] ?? '';
-            if ( $sanitizer === 'boolval' ) {
-                $value = isset( $_POST[ $key ] ) ? true : false;
-            } else {
-                $value = $sanitizer( $value );
-            }
-            update_option( WPC_OPTION_PREFIX . $key, $value );
-        }
-
-        set_transient( 'wpc_settings_saved', true, 30 );
-        wp_safe_redirect( admin_url( 'admin.php?page=wpc-settings&saved=1' ) );
-        exit;
-    }
 
     // --- Avvisi admin ---
 
@@ -393,19 +286,7 @@ class AdminPage {
     public function lock_mode_notice(): void {
         echo '<div class="notice notice-error"><p>';
         echo '<strong>&#128274; WP Control</strong> — ';
-        esc_html_e( 'Il sito è attualmente in modalità di blocco. L\'accesso è limitato.', 'wp-control' );
-        echo ' <a href="' . esc_url( admin_url( 'admin.php?page=wpc-emergency-unlock' ) ) . '">';
-        esc_html_e( 'Sblocco di emergenza', 'wp-control' );
-        echo '</a>';
+        esc_html_e( 'Il sito è attualmente in modalità di blocco. Per sbloccare, accedi al pannello WP Control Center.', 'wp-control' );
         echo '</p></div>';
-    }
-
-    public function deactivation_error_notice(): void {
-        if ( isset( $_GET['wpc_error'] ) && $_GET['wpc_error'] === 'unauthorized_deactivation' ) {
-            echo '<div class="notice notice-error"><p>';
-            echo '<strong>WP Control</strong> — ';
-            esc_html_e( 'La disattivazione del plugin richiede il codice di autorizzazione.', 'wp-control' );
-            echo '</p></div>';
-        }
     }
 }
