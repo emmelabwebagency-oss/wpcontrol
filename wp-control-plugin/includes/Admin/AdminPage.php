@@ -249,6 +249,24 @@ class AdminPage {
 
         $crypto = $this->plugin->get_crypto();
 
+        // Site ID dal pannello di controllo.
+        $site_id = sanitize_text_field( $_POST['site_id'] ?? '' );
+        if ( empty( $site_id ) ) {
+            set_transient( 'wpc_setup_error', __( 'Il Site ID è obbligatorio. Registra il sito nel pannello WP Control Center per ottenerne uno.', 'wp-control' ), 30 );
+            wp_safe_redirect( admin_url( 'admin.php?page=wpc-setup&error=1' ) );
+            exit;
+        }
+        update_option( WPC_OPTION_PREFIX . 'site_id', $site_id );
+
+        // API Token dal pannello di controllo.
+        $api_token = sanitize_text_field( $_POST['api_token'] ?? '' );
+        if ( empty( $api_token ) ) {
+            set_transient( 'wpc_setup_error', __( 'L\'API Token è obbligatorio. Lo trovi nel pannello WP Control Center dopo aver registrato il sito.', 'wp-control' ), 30 );
+            wp_safe_redirect( admin_url( 'admin.php?page=wpc-setup&error=1' ) );
+            exit;
+        }
+        update_option( WPC_OPTION_PREFIX . 'api_token_encrypted', $crypto->encrypt( $api_token ) );
+
         // Master unlock code.
         $master_code = sanitize_text_field( $_POST['master_unlock_code'] ?? '' );
         if ( ! empty( $master_code ) ) {
@@ -266,14 +284,6 @@ class AdminPage {
         if ( ! empty( $panel_url ) ) {
             update_option( WPC_OPTION_PREFIX . 'control_panel_url', $panel_url );
         }
-
-        // Genera Site ID.
-        $site_id = $crypto->generate_site_id();
-        update_option( WPC_OPTION_PREFIX . 'site_id', $site_id );
-
-        // Genera e salva il token API.
-        $api_token = $crypto->generate_api_token();
-        update_option( WPC_OPTION_PREFIX . 'api_token_encrypted', $crypto->encrypt( $api_token ) );
 
         // IP autorizzati.
         $allowed_ips = sanitize_text_field( $_POST['allowed_ips'] ?? '' );
@@ -295,8 +305,7 @@ class AdminPage {
             ] ),
         ] );
 
-        // Salva il token in un transient temporaneo per mostrarlo all'utente.
-        set_transient( 'wpc_setup_api_token', $api_token, 300 );
+        // Salva il site_id in un transient temporaneo per mostrarlo all'utente.
         set_transient( 'wpc_setup_site_id', $site_id, 300 );
 
         wp_safe_redirect( admin_url( 'admin.php?page=wp-control&setup=complete' ) );
