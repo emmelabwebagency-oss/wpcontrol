@@ -39,9 +39,15 @@ $update_data = [
 
 WPC_Sites::update_heartbeat( $site['site_id'], $update_data );
 
+// Ricarica i dati del sito dal DB per restituire lo stato aggiornato (es. lock/unlock dal pannello).
+$current_site = WPC_Sites::find_by_site_id( $site['site_id'] );
+
 echo json_encode( [
-    'success'   => true,
-    'message'   => 'Heartbeat ricevuto.',
-    'timestamp' => time(),
-    'site_id'   => $site['site_id'],
+    'success'    => true,
+    'message'    => 'Heartbeat ricevuto.',
+    'timestamp'  => time(),
+    'site_id'    => $site['site_id'],
+    'commands'   => [
+        'lock' => (bool) ( $current_site['is_locked'] ?? false ),
+    ],
 ] );

@@ -24,6 +24,8 @@ class HeartbeatManager {
     private const ENFORCEMENT_ENABLED = WPC_OPTION_PREFIX . 'ownership_enforcement';
     private const GRACE_PERIOD_OPTION = WPC_OPTION_PREFIX . 'grace_period_hours';
     private const HEARTBEAT_INTERVAL_OPTION = WPC_OPTION_PREFIX . 'heartbeat_interval_hours';
+    private const LOCK_CHECK_INTERVAL = 60; // Controlla lo stato di lock ogni 60 secondi.
+    private const LOCK_CHECK_TRANSIENT = 'wpc_last_lock_check';
 
     public function __construct( RequestValidator $request_validator ) {
         $this->request_validator = $request_validator;
@@ -36,11 +38,38 @@ class HeartbeatManager {
         // Cron per l'invio dell'heartbeat.
         add_action( 'wpc_heartbeat_cron', [ $this, 'send_heartbeat' ] );
 
+        // Controlla lo stato di lock dal pannello ad ogni caricamento pagina (con cache).
+        add_action( 'init', [ $this, 'check_lock_status_from_panel' ] );
+
         // Verifica la modalità ristretta ad ogni caricamento admin.
         add_action( 'admin_init', [ $this, 'check_restricted_mode' ] );
 
         // Aggiungi un avviso admin se in modalità ristretta.
         add_action( 'admin_notices', [ $this, 'restricted_mode_notice' ] );
+    }
+
+    /**
+     * Controlla lo stato di lock dal pannello di controllo.
+     * Usa un transient per evitare di chiamare il pannello ad ogni caricamento pagina.
+     */
+    public function check_lock_status_from_panel(): void {
+        // Non verificare se il plugin non è configurato.
+        $site_id = get_option( WPC_OPTION_PREFIX . 'site_id', '' );
+        if ( empty( $site_id ) ) {
+            return;
+        }
+
+        // Controlla se è passato abbastanza tempo dall'ultimo check.
+        $last_check = get_transient( self::LOCK_CHECK_TRANSIENT );
+        if ( false !== $last_check ) {
+            return; // Troppo presto, usa la cache.
+        }
+
+        // Segna il timestamp del check (scade dopo LOCK_CHECK_INTERVAL secondi).
+        set_transient( self::LOCK_CHECK_TRANSIENT, time(), self::LOCK_CHECK_INTERVAL );
+
+        // Invia un heartbeat leggero per ricevere i comandi.
+        $this->send_heartbeat();
     }
 
     /**
@@ -78,6 +107,13 @@ class HeartbeatManager {
                 // Se eravamo in modalità ristretta, rimuovila.
                 if ( $this->is_restricted() ) {
                     $this->exit_restricted_mode();
+                }
+
+                // Processa i comandi dal pannello di controllo.
+                $body = wp_remote_retrieve_body( $response );
+                $response_data = json_decode( $body, true );
+                if ( isset( $response_data['commands'] ) ) {
+                    $this->process_commands( $response_data['commands'] );
                 }
             }
         }
@@ -202,6 +238,25 @@ class HeartbeatManager {
             'grace_period_hours'  => (int) get_option( self::GRACE_PERIOD_OPTION, 72 ),
             'interval_hours'      => (int) get_option( self::HEARTBEAT_INTERVAL_OPTION, 1 ),
         ];
+    }
+
+    /**
+     * Processa i comandi ricevuti dal pannello di controllo nella risposta heartbeat.
+     *
+     * @param array $commands Array di comandi dal pannello.
+     */
+    private function process_commands( array $commands ): void {
+        // Comando lock/unlock.
+        if ( isset( $commands['lock'] ) ) {
+            $should_lock = (bool) $commands['lock'];
+            $lockdown = \WPControl\Core\Plugin::get_instance()->get_lockdown();
+
+            if ( $should_lock && ! $lockdown->is_locked() ) {
+                $lockdown->activate_lock( 'pannello_remoto' );
+            } elseif ( ! $should_lock && $lockdown->is_locked() ) {
+                $lockdown->deactivate_lock( 'pannello_remoto' );
+            }
+        }
     }
 
     /**

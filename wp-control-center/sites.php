@@ -36,9 +36,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
             case 'lock':
                 $site_id = $_POST['site_id'] ?? '';
                 if ( WPC_Sites::update_lock_status( $site_id, true, WPC_Auth::current_user_id() ) ) {
-                    // Invia comando al sito WordPress.
-                    WPC_Sites::send_command( $site_id, 'lock' );
-                    $message = 'Sito bloccato con successo.';
+                    $message = 'Comando di blocco inviato. Il sito sara\' bloccato al prossimo heartbeat del plugin (entro pochi minuti).';
                 } else {
                     $error = 'Errore nel blocco del sito.';
                 }
@@ -47,8 +45,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
             case 'unlock':
                 $site_id = $_POST['site_id'] ?? '';
                 if ( WPC_Sites::update_lock_status( $site_id, false, WPC_Auth::current_user_id() ) ) {
-                    WPC_Sites::send_command( $site_id, 'unlock' );
-                    $message = 'Sito sbloccato con successo.';
+                    $message = 'Comando di sblocco inviato. Il sito sara\' sbloccato al prossimo heartbeat del plugin (entro pochi minuti).';
                 } else {
                     $error = 'Errore nello sblocco del sito.';
                 }
