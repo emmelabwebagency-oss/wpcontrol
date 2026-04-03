@@ -1,0 +1,41 @@
+# WP Control Center - Apache Configuration
+# Compatibile con Netsons shared hosting
+
+# Attiva il rewrite engine
+RewriteEngine On
+
+# Forza HTTPS (decommenta su produzione)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Impedisci l'accesso ai file di configurazione
+<FilesMatch "\.(php\.bak|php~|log|sql|env)$">
+    Require all denied
+</FilesMatch>
+
+# Proteggi la directory config
+<IfModule mod_rewrite.c>
+    RewriteRule ^config/ - [F,L]
+    RewriteRule ^includes/ - [F,L]
+    RewriteRule ^backups/ - [F,L]
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# Impedisci il listing delle directory
+Options -Indexes
+
+# PHP Settings (se supportato)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 256M
+    php_value post_max_size 256M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+</IfModule>

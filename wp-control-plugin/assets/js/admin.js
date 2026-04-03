@@ -1,0 +1,22 @@
+/**
+ * WP License Template KIT - Script Admin
+ */
+(function($) {
+    'use strict';
+
+    $(document).ready(function() {
+        // Conferma azioni critiche.
+        $('.ltk-confirm-action').on('click', function(e) {
+            if (!confirm(ltkAdmin.i18n.confirm)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Auto-hide delle notifiche dopo 5 secondi.
+        setTimeout(function() {
+            $('.ltk-dashboard .notice.is-dismissible').fadeOut(500);
+        }, 5000);
+    });
+
+})(jQuery);
