@@ -99,10 +99,16 @@ class WPC_HmacAuth {
     public static function extract_headers(): ?array {
         $headers = self::get_all_headers();
 
-        $site_id   = $headers['X-LTK-Site-ID']   ?? $headers['X-LTK-Site-Id']   ?? $headers['x-wpc-site-id']   ?? $headers['X-LTK-SITE-ID'] ?? null;
-        $signature = $headers['X-LTK-Signature']  ?? $headers['x-wpc-signature']  ?? $headers['X-LTK-SIGNATURE'] ?? null;
-        $timestamp = $headers['X-LTK-Timestamp']  ?? $headers['x-wpc-timestamp']  ?? $headers['X-LTK-TIMESTAMP'] ?? null;
-        $nonce     = $headers['X-LTK-Nonce']      ?? $headers['x-wpc-nonce']      ?? $headers['X-LTK-NONCE']     ?? null;
+        // Normalizza tutti gli header a lowercase per confronto case-insensitive.
+        $lower_headers = [];
+        foreach ( $headers as $key => $value ) {
+            $lower_headers[ strtolower( $key ) ] = $value;
+        }
+
+        $site_id   = $lower_headers['x-ltk-site-id']   ?? $lower_headers['x-wpc-site-id']   ?? null;
+        $signature = $lower_headers['x-ltk-signature']  ?? $lower_headers['x-wpc-signature']  ?? null;
+        $timestamp = $lower_headers['x-ltk-timestamp']  ?? $lower_headers['x-wpc-timestamp']  ?? null;
+        $nonce     = $lower_headers['x-ltk-nonce']      ?? $lower_headers['x-wpc-nonce']      ?? null;
 
         if ( ! $site_id || ! $signature || ! $timestamp || ! $nonce ) {
             return null;
