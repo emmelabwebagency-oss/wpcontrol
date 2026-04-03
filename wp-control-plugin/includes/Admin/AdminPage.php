@@ -52,7 +52,7 @@ class AdminPage {
             'manage_options',
             'wp-ltk',
             [ $this, 'render_dashboard' ],
-            'dashicons-shield-alt',
+            'dashicons-heart',
             3
         );
 
@@ -64,36 +64,6 @@ class AdminPage {
             'manage_options',
             'wp-ltk',
             [ $this, 'render_dashboard' ]
-        );
-
-        // Sottomenu: Impostazioni.
-        add_submenu_page(
-            'wp-ltk',
-            __( 'Impostazioni', 'wp-ltk' ),
-            __( 'Impostazioni', 'wp-ltk' ),
-            'manage_options',
-            'ltk-settings',
-            [ $this, 'render_settings' ]
-        );
-
-        // Sottomenu: Backup.
-        add_submenu_page(
-            'wp-ltk',
-            __( 'Backup', 'wp-ltk' ),
-            __( 'Backup', 'wp-ltk' ),
-            'manage_options',
-            'ltk-backups',
-            [ $this, 'render_backups' ]
-        );
-
-        // Sottomenu: Log di Sicurezza.
-        add_submenu_page(
-            'wp-ltk',
-            __( 'Log di Sicurezza', 'wp-ltk' ),
-            __( 'Log di Sicurezza', 'wp-ltk' ),
-            'manage_options',
-            'ltk-security-log',
-            [ $this, 'render_security_log' ]
         );
 
         // Sottomenu: Setup (solo se non configurato).
